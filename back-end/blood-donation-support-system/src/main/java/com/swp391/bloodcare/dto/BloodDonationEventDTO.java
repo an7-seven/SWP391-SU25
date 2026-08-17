@@ -31,8 +31,10 @@ public class BloodDonationEventDTO {
     @Positive(message = "Lượng máu kỳ vọng phải lớn hơn 0")
     private Long expectedBloodVolume;
 
+    @NotNull(message = "Lượng máu thực tế không được để trống")
     @Min(value = 0, message = "Lượng máu thực tế phải >= 0")
     private Long actualVolume = 0L;
+
 
     @NotBlank(message = "Địa điểm không được để trống")
     @Size(max = 255, message = "Địa điểm không được quá 255 ký tự")

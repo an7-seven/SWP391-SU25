@@ -87,6 +87,22 @@ public class EventService {
         eventRepository.delete(event);
     }
 
+    @Transactional
+    public BloodDonationEventDTO increaseActualVolumeForEvent(String eventId, Long addedVolume) {
+        if (addedVolume == null || addedVolume <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khối lượng máu thêm phải lớn hơn 0");
+        }
+
+        BloodDonationEvent event = eventRepository.findByEventId(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy sự kiện với ID: " + eventId));
+
+        Long currentVolume = event.getActualVolume();
+        event.setActualVolume(currentVolume + addedVolume);
+
+        return BloodDonationEventDTO.toDTO(eventRepository.save(event));
+    }
+
+
     @Scheduled(cron = "0 00 0 * * ?", zone = "Asia/Ho_Chi_Minh")
     @Transactional
     public int autoUpdateEventStatuses() {
@@ -181,7 +197,7 @@ public class EventService {
         </p>
 
         <div style="text-align:center;margin-top:30px;">
-            <a href="https://localhost:5173/" target="_blank" style="
+            <a href="http://localhost:5173/" target="_blank" style="
                 display:inline-block;
                 background-color:#d62828;
                 color:#fff;

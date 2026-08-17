@@ -1,6 +1,7 @@
 package com.swp391.bloodcare.service;
 
 import com.swp391.bloodcare.dto.HealthCheckDTO;
+import com.swp391.bloodcare.entity.BloodDonationEvent;
 import com.swp391.bloodcare.entity.DonationRegistration;
 import com.swp391.bloodcare.entity.HealthCheck;
 import com.swp391.bloodcare.entity.Profile;
@@ -27,6 +28,7 @@ public class HealthCheckService {
     private final BloodDonationHistoryService bloodDonationHistoryService;
     private final ProfileService profileService;
     private final ProfileRepository profileRepository;
+    private final EventService eventService;
 
 
     @Transactional
@@ -143,25 +145,38 @@ public class HealthCheckService {
         String accountId = reg.getAccount().getAccountId();
         DonationRegistration.Status currentStatus = reg.getStatus();
 
+        DonationRegistration.Volume volumeEnum = reg.getVolumeToTake();
+        if (volumeEnum == null) {
+            throw new IllegalStateException("Thể tích máu (volumeToTake) trong đơn đăng ký bị null");
+        }
+
+        long addVolume = volumeEnum.getMl();
+
+        BloodDonationEvent event = reg.getEvent();
+        if (event == null) {
+            throw new IllegalStateException("Đơn đăng ký không liên kết với sự kiện hiến máu");
+        }
+
         switch (currentStatus) {
             case CANCELLED:
             case CHECKING:
                 reg.setStatus(DonationRegistration.Status.COMPLETED);
                 profileService.increaseBloodDonationCount(accountId);
                 profile.setRestDate(LocalDate.now().plusDays(84));
+                eventService.increaseActualVolumeForEvent(event.getEventId(), addVolume);
                 break;
 
             case COMPLETED:
                 reg.setStatus(DonationRegistration.Status.CANCELLED);
                 profileService.decreaseBloodDonationCount(accountId);
                 profile.setRestDate(null);
+                eventService.increaseActualVolumeForEvent(event.getEventId(), -addVolume);
                 break;
 
             default:
                 throw new IllegalStateException("Không thể cập nhật trạng thái cho trạng thái hiện tại: " + currentStatus);
         }
 
-        // Đảm bảo 2 chiều
         reg.setHealthCheck(healthCheck);
         healthCheck.setDonationRegistration(reg);
 

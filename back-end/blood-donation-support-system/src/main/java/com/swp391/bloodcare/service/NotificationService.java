@@ -253,30 +253,40 @@ public class NotificationService {
         );
     }
 
-    public void sendDonorNotification(BloodBag bag){
-        Account donor = bag.getAfterDonationBlood().getHealthCheck().getDonationRegistration().getAccount(); // về sau khi merge thì thay
+    public void sendDonorNotification(BloodBag bag) {
+        AfterDonationBlood afterDonation = bag.getAfterDonationBlood();
+        if (afterDonation == null) return;
 
-        if(donor == null || donor.getEmail() == null){
+        HealthCheck healthCheck = afterDonation.getHealthCheck();
+        if (healthCheck == null) return;
+
+        DonationRegistration registration = healthCheck.getDonationRegistration();
+        if (registration == null) return;
+
+        Account donor = registration.getAccount();
+        if (donor == null || donor.getEmail() == null || donor.getProfile() == null || donor.getProfile().getName() == null) {
             return;
         }
+
         String subject = "Cảm ơn bạn vì hành động cao cả!";
         String content = String.format("""
-            Xin chào %s,
+        Xin chào %s,
 
-            Chúng tôi xin trân trọng thông báo rằng túi máu của bạn (Mã: %s) đã được sử dụng để cứu giúp một bệnh nhân.
+        Chúng tôi xin trân trọng thông báo rằng túi máu của bạn (Mã: %s) đã được sử dụng để cứu giúp một bệnh nhân.
 
-            Cảm ơn bạn vì sự đóng góp quý giá cho cộng đồng.
+        Cảm ơn bạn vì sự đóng góp quý giá cho cộng đồng.
 
-            Trân trọng,
-            Đội ngũ BloodCare
-            """,
+        Trân trọng,
+        Đội ngũ BloodCare
+        """,
                 donor.getProfile().getName(), bag.getBagId());
+
         emailService.sendEmail(donor.getEmail(), subject, content);
         sendSystemNotification(
                 donor.getAccountId(),
                 "Túi máu của bạn đã được sử dụng",
                 "Túi máu (Mã: " + bag.getBagId() + ") của bạn đã được sử dụng để giúp một bệnh nhân. Cảm ơn bạn!"
         );
-
     }
+
 }

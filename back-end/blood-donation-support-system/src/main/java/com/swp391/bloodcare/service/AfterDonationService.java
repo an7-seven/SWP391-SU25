@@ -52,7 +52,7 @@ public class AfterDonationService {
     public AfterDonationBloodDTO create(AfterDonationBloodDTO dto) {
         HealthCheck healthCheck = healthCheckRepo.findByHealthCheckId(dto.getHealthCheckId())
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy HealthCheck"));
-        if(!healthCheck.getDonationRegistration().getStatus().name().equals("PASS")){
+        if(!healthCheck.getDonationRegistration().getStatus().name().equals("COMPLETED")){
             throw new IllegalStateException("Đơn này chưa xác nhận đã hiến máu");
 
         }
